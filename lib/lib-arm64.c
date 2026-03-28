@@ -31,13 +31,6 @@ static void *memcpy(void* d, void* s, __SIZE_TYPE__ c) {
 #include <string.h>
 #endif
 
-#if !defined __riscv && !defined __APPLE__
-void __clear_cache(void *beg, void *end)
-{
-    __arm64_clear_cache(beg, end);
-}
-#endif
-
 typedef struct {
     uint64_t x0, x1;
 } u128_t;

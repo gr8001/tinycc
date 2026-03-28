@@ -946,7 +946,7 @@ redo_start:
             else if (parse_flags & PARSE_FLAG_ASM_FILE)
                 p = parse_line_comment(p - 1);
 #else
-            /* ARM/ARM64 assembly uses '#' for constants */
+            /* ARM assembly uses '#' for constants */
 #endif
             break;
 _default:

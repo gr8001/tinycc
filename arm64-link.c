@@ -288,8 +288,8 @@ ST_FUNC void relocate(TCCState *s1, ElfW_Rel *rel, int type, unsigned char *ptr,
         case R_AARCH64_CONDBR19:
             /* Conditional branch: 19-bit signed offset, bits 23:5 */
 #ifdef DEBUG_RELOC
-     printf ("reloc %d @ 0x%lx: val=0x%lx name=%s\n", type, addr, val,
-      (char *) symtab_section->link->data + sym->st_name);
+            printf ("reloc %d @ 0x%lx: val=0x%lx name=%s\n", type, addr, val,
+                (char *) symtab_section->link->data + sym->st_name);
 #endif
             if (((val - addr) + ((uint64_t)1 << 20)) & ~(uint64_t)0x1ffffc)
                 tcc_error_noabort("R_AARCH64_CONDBR19 relocation failed"
@@ -300,8 +300,8 @@ ST_FUNC void relocate(TCCState *s1, ElfW_Rel *rel, int type, unsigned char *ptr,
         case R_AARCH64_TSTBR14:
             /* Test and branch: 14-bit signed offset, bits 20:5 */
 #ifdef DEBUG_RELOC
-     printf ("reloc %d @ 0x%lx: val=0x%lx name=%s\n", type, addr, val,
-      (char *) symtab_section->link->data + sym->st_name);
+            printf ("reloc %d @ 0x%lx: val=0x%lx name=%s\n", type, addr, val,
+                (char *) symtab_section->link->data + sym->st_name);
 #endif
             if (((val - addr) + ((uint64_t)1 << 15)) & ~(uint64_t)0xfffc)
                 tcc_error_noabort("R_AARCH64_TSTBR14 relocation failed"
@@ -314,8 +314,8 @@ ST_FUNC void relocate(TCCState *s1, ElfW_Rel *rel, int type, unsigned char *ptr,
         {
             const char *name;
 #ifdef DEBUG_RELOC
-	    printf ("reloc %d @ 0x%lx: val=0x%lx name=%s\n", type, addr, val,
-		    (char *) symtab_section->link->data + sym->st_name);
+            printf ("reloc %d @ 0x%lx: val=0x%lx name=%s\n", type, addr, val,
+            (char *) symtab_section->link->data + sym->st_name);
 #endif
             if (((val - addr) + ((uint64_t)1 << 27)) & ~(uint64_t)0xffffffc) {
 #ifdef TCC_TARGET_PE

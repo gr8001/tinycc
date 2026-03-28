@@ -12,19 +12,7 @@
 #ifdef TARGET_DEFS_ONLY
 
 // Number of registers available to allocator:
-#ifdef TCC_TARGET_PE
-#define NB_REGS 27 // x0-x17, x30, v0-v7 (x18 reserved on Windows)
-#define TREG_R(x) (x) // x = 0..17
-#define TREG_R30  18
-#define TREG_F(x) (x + 19) // x = 0..7
-#define RC_INT (1 << 0)
-#define RC_FLOAT (1 << 1)
-#define RC_R(x) (1 << (2 + (x))) // x = 0..17
-#define RC_R30  (1 << 20)
-#define RC_F(x) (1 << (21 + (x))) // x = 0..7
-#else
 #define NB_REGS 28 // x0-x18, x30, v0-v7
-
 #define TREG_R(x) (x) // x = 0..18
 #define TREG_R30  19
 #define TREG_F(x) (x + 20) // x = 0..7
@@ -33,7 +21,6 @@
 #define RC_R(x) (1 << (2 + (x))) // x = 0..18
 #define RC_R30  (1 << 21)
 #define RC_F(x) (1 << (22 + (x))) // x = 0..7
-#endif
 
 // Register classes sorted from more general to more precise:
 
@@ -57,6 +44,7 @@
 /* define if return values need to be extended explicitely
    at caller side (for interfacing with non-TCC compilers) */
 #define PROMOTE_RET
+
 /******************************************************/
 #else /* ! TARGET_DEFS_ONLY */
 /******************************************************/
@@ -91,7 +79,9 @@ ST_DATA const int reg_classes[NB_REGS] = {
   RC_INT | RC_R(15),
   RC_INT | RC_R(16),
   RC_INT | RC_R(17),
-#ifndef TCC_TARGET_PE
+#ifdef TCC_TARGET_PE
+  RC_R(18), /* (x18 reserved on Windows) */
+#else
   RC_INT | RC_R(18),
 #endif
   RC_R30, // not in RC_INT as we make special use of x30
@@ -1192,14 +1182,14 @@ ST_FUNC void gfunc_call(int nb_args)
                 uint32_t j, sz, n = arm64_hfa(&vtop->type, &sz);
                 if (n > 0) {
                     /* HFA struct - load from memory into float registers */
-                vtop->type.t = VT_PTR;
-                gaddrof();
-                gv(RC_R30);
-                for (j = 0; j < n; j++)
-                    o(0x3d4003c0 |
-                      (sz & 16) << 19 | -(sz & 8) << 27 | (sz & 4) << 29 |
-                      (a[i] / 2 - 8 + j) |
-                      j << 10); // ldr ([sdq])(*),[x30,#(j * sz)]
+                    vtop->type.t = VT_PTR;
+                    gaddrof();
+                    gv(RC_R30);
+                    for (j = 0; j < n; j++)
+                        o(0x3d4003c0 |
+                          (sz & 16) << 19 | -(sz & 8) << 27 | (sz & 4) << 29 |
+                          (a[i] / 2 - 8 + j) |
+                          j << 10); // ldr ([sdq])(*),[x30,#(j * sz)]
                 } else {
                     /* Non-HFA struct in float register slot - shouldn't happen */
                     gv(RC_F(a[i] / 2 - 8));
@@ -1345,6 +1335,8 @@ ST_FUNC void gfunc_prolog(Sym *func_sym)
 
     arm64_func_start_offset = ind;
     o(0xa9b27bfd); // stp x29,x30,[sp,#-224]!
+    o(0x910003fd); // mov x29,sp
+
     for (i = 0; i < last_float; i++)
         // stp q0,q1,[sp,#16], stp q2,q3,[sp,#48]
         // stp q4,q5,[sp,#80], stp q6,q7,[sp,#112]
@@ -1392,7 +1384,6 @@ ST_FUNC void gfunc_prolog(Sym *func_sym)
     tcc_free(a);
     tcc_free(t);
 
-    o(0x910003fd); // mov x29,sp
     arm64_func_sub_sp_offset = ind;
     /* In gfunc_epilog these will be replaced with stack setup code. */
     for (i = 0; i < ARM64_FUNC_STACK_SETUP_SLOTS; ++i)
@@ -1456,7 +1447,6 @@ ST_FUNC void gen_va_start(void)
 ST_FUNC void gen_va_arg(CType *t)
 {
     int align, size = type_size(t, &align);
-    unsigned fsize, hfa = arm64_hfa(t, &fsize);
     uint32_t r0, r1;
 
 #ifdef TCC_TARGET_PE
@@ -1502,12 +1492,15 @@ ST_FUNC void gen_va_arg(CType *t)
     if (indirect)
         o(ARM64_LDR_X | ARM64_RN(r1) | r1); // ldr x(r1),[x(r1)]
     return;
-#endif
+
+#else
+    unsigned fsize, hfa;
 
     if (is_float(t->t)) {
         hfa = 1;
         fsize = size;
-    }
+    } else
+        hfa = arm64_hfa(t, &fsize);
 
     gaddrof();
     r0 = intr(gv(RC_INT));
@@ -1585,6 +1578,7 @@ ST_FUNC void gen_va_arg(CType *t)
         write32le(cur_text_section->data + b2, ARM64_B | ((ind - b2) >> 2));
 #endif
     }
+#endif /* not pe */
 }
 
 ST_FUNC int gfunc_sret(CType *vt, int variadic, CType *ret,

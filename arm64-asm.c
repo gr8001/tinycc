@@ -85,11 +85,7 @@ enum {
 #define TREG_X30 30
 #define TREG_SP  31
 
-#ifdef TCC_TARGET_PE
-#define ARM64_FREG_BASE 19
-#else
 #define ARM64_FREG_BASE 20
-#endif
 #define ARM64_FREG_LAST (ARM64_FREG_BASE + 7)
 
 typedef struct Operand {
@@ -1928,9 +1924,9 @@ ST_FUNC void asm_gen_code(ASMOperand *operands, int nb_operands,
 }
 
 ST_FUNC void asm_compute_constraints(ASMOperand *operands,
-                                    int nb_operands, int nb_outputs,
-                                    const uint8_t *clobber_regs,
-                                    int *pout_reg)
+                                     int nb_operands, int nb_outputs,
+                                     const uint8_t *clobber_regs,
+                                     int *pout_reg)
 {
     ASMOperand *op;
     int sorted_op[MAX_ASM_OPERANDS];
