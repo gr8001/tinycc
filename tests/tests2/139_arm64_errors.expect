@@ -1,0 +1,20 @@
+[test_unknown_instruction]
+139_arm64_errors.c:10: error: ARM64 instruction 'fubar' not implemented
+
+[test_shift_imm_range_32]
+139_arm64_errors.c:17: error: shift immediate out of range
+
+[test_shift_imm_range_64]
+139_arm64_errors.c:25: error: shift immediate out of range
+
+[test_invalid_sysreg]
+139_arm64_errors.c:34: error: unsupported system register
+
+[test_invalid_barrier_option]
+139_arm64_errors.c:42: error: invalid operand 'xyz'
+
+[test_extended_inline_asm]
+139_arm64_errors.c:51: error: invalid reference in constraint 1 ('2')
+
+[test_extended_inline_clobber]
+139_arm64_errors.c:59: error: invalid clobber register 'bogus'
