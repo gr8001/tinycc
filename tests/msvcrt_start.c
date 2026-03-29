@@ -15,7 +15,7 @@
  REDIR(__set_app_type)\
  REDIR(exit)
 
-#if defined __GNUC__ && defined __i386__
+#if defined __i386__ && !defined __TINYC__
 # define __leading_underscore 1
 #endif
 

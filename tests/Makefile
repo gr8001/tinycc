@@ -82,6 +82,7 @@ all test :
 	@$(TCC_LOCAL) -v
 	@$(MAKE) --no-print-directory -s clean
 	@$(MAKE) --no-print-directory -s -r _all
+	@echo ------- ALL TESTS PASSED --------
 
 _all : $(TESTS)
 
