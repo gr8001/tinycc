@@ -1,4 +1,4 @@
-name: test arm64-win32
+name: test win32 with MSVC
 
 on:
   push:
@@ -10,56 +10,24 @@ jobs:
     timeout-minutes: 2
     steps:
     - uses: actions/checkout@v4
-    - name: build with MSVC (i386-win32)
+    - name: test (i386-win32)
       shell: cmd
       run: |
         echo ::group:: run build-tcc.bat
         cd win32
         call "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=x86
         call build-tcc.bat -c cl -t i386
+        echo off
         echo ::endgroup::
-        .\tcc -I.. libtcc.dll -run ../tests/libtcc_test.c
-        .\tcc -I.. libtcc.dll -v ../tests/libtcc_test_mt.c -o libtest_mt.exe && .\libtest_mt.exe ../tcc.c
-
-  test-x86_64-win32:
-    runs-on: windows-2025
-    timeout-minutes: 2
-    steps:
-    - uses: actions/checkout@v4
-    - name: build with MSVC (x86_64-win32)
-      shell: cmd
-      run: |
-        echo ::group:: run build-tcc.bat
-        cd win32
-        call "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=amd64
-        call build-tcc.bat -c cl -t x86_64
-        echo ::endgroup::
-        .\tcc -I.. libtcc.dll -run ../tests/libtcc_test.c
-        .\tcc -I.. libtcc.dll -v ../tests/libtcc_test_mt.c -o libtest_mt.exe && .\libtest_mt.exe ../tcc.c
-
-  test-arm64-win32:
-    runs-on: windows-11-arm
-    timeout-minutes: 3
-    steps:
-    - uses: actions/checkout@v4
-    - name: build & test tcc (arm64-win32)
-      shell: cmd
-      run: |
-        @echo off
-        echo ::group:: build
-        cd win32
-        call build-tcc.bat -c clang
-        @echo off
-        echo ::endgroup::
-        if not exist libtcc.dll exit /b 1
-        set ARCH=arm64
-        set CC=clang
+        set ARCH=i386
+        set CC=gcc
+        set PATH=c:\mingw32\bin;%PATH%
         echo>>..\config.h #define CC_NAME CC_%CC%
         echo>..\config.mak # -----------
         echo>>..\config.mak prefix = .
         echo>>..\config.mak CC = %CC%.exe
         echo>>..\config.mak CC_NAME = %CC%
-        echo>>..\config.mak GCC_MAJOR = 6
+        echo>>..\config.mak GCC_MAJOR = 15
         echo>>..\config.mak CFLAGS = -O0
         echo>>..\config.mak LDFLAGS =
         echo>>..\config.mak LIBSUF = .lib
@@ -70,9 +38,84 @@ jobs:
         echo>>..\config.mak CONFIG_WIN32 = yes
         echo>>..\config.mak VERSION = 0.9.28rc
         echo>>..\config.mak TOPSRC = $(TOP)
+        echo>>..\config.mak TESTREF_FLAGS = crt.c -nostdlib -Wl,-entry=_start -lgcc -lkernel32
         echo>>..\config.mak SHELL = sh
         set PATH=%CD%;%PATH%
-        make -s -C.. test -k^
-          TCC_LOCAL=tcc.exe LIBTCC=win32/libtcc.lib^
-          && echo --- ALL TESTS PASSED ---
+        cd ..\tests
+        make test -k TCC_LOCAL=tcc.exe LIBTCC=win32/libtcc.dll
 
+  test-x86_64-win32:
+    runs-on: windows-2025
+    timeout-minutes: 2
+    steps:
+    - uses: actions/checkout@v4
+    - name: test (x86_64-win32)
+      shell: cmd
+      run: |
+        echo ::group:: run build-tcc.bat
+        cd win32
+        call "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=amd64
+        call build-tcc.bat -c cl -t x86_64
+        echo off
+        echo ::endgroup::
+        set ARCH=x86_64
+        set CC=gcc
+        echo>>..\config.h #define CC_NAME CC_%CC%
+        echo>..\config.mak # -----------
+        echo>>..\config.mak prefix = .
+        echo>>..\config.mak CC = %CC%.exe
+        echo>>..\config.mak CC_NAME = %CC%
+        echo>>..\config.mak GCC_MAJOR = 15
+        echo>>..\config.mak CFLAGS = -O0
+        echo>>..\config.mak LDFLAGS =
+        echo>>..\config.mak LIBSUF = .lib
+        echo>>..\config.mak EXESUF = .exe
+        echo>>..\config.mak DLLSUF = .dll
+        echo>>..\config.mak ARCH = %ARCH%
+        echo>>..\config.mak TARGETOS = WIN32
+        echo>>..\config.mak CONFIG_WIN32 = yes
+        echo>>..\config.mak VERSION = 0.9.28rc
+        echo>>..\config.mak TOPSRC = $(TOP)
+        echo>>..\config.mak TESTREF_FLAGS = crt.c -nostdlib -Wl,-entry=_start -lgcc -lkernel32
+        echo>>..\config.mak SHELL = sh
+        set PATH=%CD%;%PATH%
+        cd ..\tests
+        make test -k TCC_LOCAL=tcc.exe LIBTCC=win32/libtcc.dll
+
+  test-arm64-win32:
+    runs-on: windows-11-arm
+    timeout-minutes: 2
+    steps:
+    - uses: actions/checkout@v4
+    - name: test (arm64-win32)
+      shell: cmd
+      run: |
+        echo ::group:: run build-tcc.bat
+        cd win32
+        call "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=arm64
+        call build-tcc.bat -c cl -t arm64
+        echo off
+        echo ::endgroup::
+        set ARCH=aarch64
+        set CC=clang
+        echo>>..\config.h #define CC_NAME CC_%CC%
+        echo>..\config.mak # -----------
+        echo>>..\config.mak prefix = .
+        echo>>..\config.mak CC = %CC%.exe
+        echo>>..\config.mak CC_NAME = %CC%
+        echo>>..\config.mak GCC_MAJOR = 15
+        echo>>..\config.mak CFLAGS = -O0
+        echo>>..\config.mak LDFLAGS =
+        echo>>..\config.mak LIBSUF = .lib
+        echo>>..\config.mak EXESUF = .exe
+        echo>>..\config.mak DLLSUF = .dll
+        echo>>..\config.mak ARCH = %ARCH%
+        echo>>..\config.mak TARGETOS = WIN32
+        echo>>..\config.mak CONFIG_WIN32 = yes
+        echo>>..\config.mak VERSION = 0.9.28rc
+        echo>>..\config.mak TOPSRC = $(TOP)
+        echo>>..\config.mak TESTREF_FLAGS = crt.c -nostdlib -lkernel32
+        echo>>..\config.mak SHELL = sh
+        set PATH=%CD%;%PATH%
+        cd ..\tests
+        make test -k TCC_LOCAL=tcc.exe LIBTCC=win32/libtcc.lib

@@ -12,22 +12,6 @@
 # define CC_NAME 1
 #endif
 
-#if defined _WIN32 && defined __clang__
-# include <stdio.h>
-# include <stdarg.h>
-# include <string.h>
-# include <stdlib.h>
-# define alloca malloc
-  int test_vprintf(const char *format, va_list ap)
-  {
-      char buf[1000];
-      _vsnprintf(buf, sizeof buf, format, ap);
-      return printf("%s", buf);
-  }
-# define vprintf test_vprintf
-# define _TCCLIB_H 1
-#endif
-
 #define __alignof__ (int)__alignof__
 #define sizeof (int)sizeof
 
@@ -2353,7 +2337,6 @@ void float_test(void)
     printf("%f %f %f\n", ftab1[0], ftab1[1], ftab1[2]);
     printf("%f %f %f\n", 2.12, .5, 2.3e10);
     //    printf("%f %f %f\n", 0x1234p12, 0x1e23.23p10, 0x12dp-10);
-#if !(defined _WIN32 && CC_NAME == CC_clang)
     da = 123;
     printf("da=%f\n", da);
     fa = 123;
@@ -2389,7 +2372,6 @@ void float_test(void)
     printf ("fa/2 subnormal = %.40g\n", fa);
     printf ("la/2 subnormal = %La\n", la);
     printf ("la/2 subnormal = %.40Lg\n", la);
-#endif
 #endif
 }
 
@@ -2536,9 +2518,7 @@ void llfloat(void)
     fa = ula;
     da = ula;
     lda = ula;
-#if !(defined _WIN32 && CC_NAME == CC_clang)
     printf("ulltof: %f %f %Lf\n", fa, da, lda);
-#endif
     ula = fa;
     ulb = da;
     ulc = lda;
