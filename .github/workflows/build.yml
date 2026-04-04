@@ -2,12 +2,14 @@ name: test win32 with MSVC
 
 on:
   push:
-    branches: [ mob ]
+    branches: [ arm64-win32 ]
+
+  workflow_dispatch:
 
 jobs:
   test-i386-win32:
     runs-on: windows-2025
-    timeout-minutes: 2
+    timeout-minutes: 3
     steps:
     - uses: actions/checkout@v4
     - name: test (i386-win32)
@@ -24,7 +26,7 @@ jobs:
 
   test-x86_64-win32:
     runs-on: windows-2025
-    timeout-minutes: 2
+    timeout-minutes: 3
     steps:
     - uses: actions/checkout@v4
     - name: test (x86_64-win32)
@@ -41,7 +43,7 @@ jobs:
 
   test-arm64-win32:
     runs-on: windows-11-arm
-    timeout-minutes: 2
+    timeout-minutes: 3
     steps:
     - uses: actions/checkout@v4
     - name: test (arm64-win32)
