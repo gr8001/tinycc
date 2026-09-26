@@ -296,3 +296,12 @@ bar 15 12 34
 60_errors_and_warnings.c:677: warning: assignment of read-only location
 60_errors_and_warnings.c:678: warning: assignment of read-only location
 60_errors_and_warnings.c:679: warning: assignment of read-only location
+
+[test_restrict_scalar]
+60_errors_and_warnings.c:684: error: restrict-qualified type must be a pointer to object or incomplete type
+
+[test_restrict_function_pointer]
+60_errors_and_warnings.c:688: error: restrict-qualified type must be a pointer to object or incomplete type
+
+[test_discarded_restrict]
+60_errors_and_warnings.c:699: warning: assignment discards qualifiers from pointer target type

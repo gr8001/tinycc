@@ -136,6 +136,7 @@ static void block(int flags);
 static void gen_cast(CType *type);
 static void gen_cast_s(int t);
 static inline CType *pointed_type(CType *type);
+static void check_restrict_type(CType *type);
 static int type_qualifiers(CType *type);
 static void parse_btype_qualify(CType *type, int qualifiers);
 static int is_compatible_types(CType *type1, CType *type2);
@@ -2677,6 +2678,8 @@ static void type_to_str(char *buf, int buf_size,
     if (t & VT_INLINE)
         pstrcat(buf, buf_size, "inline ");
     if (bt != VT_PTR) {
+        if (t & VT_RESTRICT)
+            pstrcat(buf, buf_size, "restrict ");
         if (t & VT_VOLATILE)
             pstrcat(buf, buf_size, "volatile ");
         if (t & VT_CONSTANT)
@@ -2775,6 +2778,8 @@ static void type_to_str(char *buf, int buf_size,
             goto no_var;
         }
         pstrcpy(buf1, sizeof(buf1), "*");
+        if (t & VT_RESTRICT)
+            pstrcat(buf1, sizeof(buf1), "restrict ");
         if (t & VT_CONSTANT)
             pstrcat(buf1, buf_size, "const ");
         if (t & VT_VOLATILE)
@@ -3566,6 +3571,18 @@ static void vpush_type_size(CType *type, int *a)
 static inline CType *pointed_type(CType *type)
 {
     return &type->ref->type;
+}
+
+static void check_restrict_type(CType *type)
+{
+    while ((type->t & VT_BTYPE) == VT_PTR) {
+        if ((type->t & VT_RESTRICT)
+            && (pointed_type(type)->t & VT_BTYPE) == VT_FUNC)
+            tcc_error("restrict-qualified type must be a pointer to object or incomplete type");
+        type = pointed_type(type);
+    }
+    if (type->t & VT_RESTRICT)
+        tcc_error("restrict-qualified type must be a pointer to object or incomplete type");
 }
 
 /* Array qualifiers are represented on the element type. */
@@ -4724,6 +4741,8 @@ static void parse_btype_qualify(CType *type, int qualifiers)
         type->ref = sym_push(SYM_FIELD, &type->ref->type, 0, type->ref->c);
         type = &type->ref->type;
     }
+    if (qualifiers & VT_RESTRICT)
+        check_restrict_type(type);
     type->t |= qualifiers;
 }
 
@@ -4882,11 +4901,14 @@ static int parse_btype(CType *type, AttributeDef *ad, int ignore_label)
             next();
             typespec_found = 1;
             break;
-        case TOK_REGISTER:
-        case TOK_AUTO:
         case TOK_RESTRICT1:
         case TOK_RESTRICT2:
         case TOK_RESTRICT3:
+            t |= VT_RESTRICT;
+            next();
+            break;
+        case TOK_REGISTER:
+        case TOK_AUTO:
             next();
             break;
         case TOK_UNSIGNED:
@@ -4998,6 +5020,7 @@ the_end:
         t = (t & ~(VT_BTYPE|VT_LONG)) | (VT_DOUBLE|VT_LONG);
 #endif
     type->t = t;
+    check_restrict_type(type);
     return type_found;
 }
 
@@ -5162,6 +5185,9 @@ static int post_type(CType *type, AttributeDef *ad, int storage, int td)
 		next();
 		continue;
 	    case TOK_RESTRICT1: case TOK_RESTRICT2: case TOK_RESTRICT3:
+		array_qualifiers |= VT_RESTRICT;
+		next();
+		continue;
 	    case TOK_STATIC:
 	    case '*':
 		next();
@@ -5297,6 +5323,7 @@ static CType *type_decl(CType *type, AttributeDef *ad, int *v, int td)
         case TOK_RESTRICT1:
         case TOK_RESTRICT2:
         case TOK_RESTRICT3:
+            qualifiers |= VT_RESTRICT;
             goto redo;
 	/* XXX: clarify attribute handling */
 	case TOK_ATTRIBUTE1:
@@ -5336,6 +5363,7 @@ static CType *type_decl(CType *type, AttributeDef *ad, int *v, int td)
     }
     post_type(post, ad, post != ret ? 0 : storage,
               td & ~(TYPE_DIRECT|TYPE_ABSTRACT));
+    check_restrict_type(type);
     parse_attribute(ad);
     type->t |= storage;
     return ret;
