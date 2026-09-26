@@ -2752,7 +2752,7 @@ static void type_to_str(char *buf, int buf_size,
             pstrcat(buf1, sizeof(buf1), varstr);
             pstrcat(buf1, sizeof(buf1), ")");
         }
-        pstrcat(buf1, buf_size, "(");
+        pstrcat(buf1, sizeof(buf1), "(");
         sa = s->next;
         while (sa != NULL) {
             char buf2[256];
@@ -2781,9 +2781,9 @@ static void type_to_str(char *buf, int buf_size,
         if (t & VT_RESTRICT)
             pstrcat(buf1, sizeof(buf1), "restrict ");
         if (t & VT_CONSTANT)
-            pstrcat(buf1, buf_size, "const ");
+            pstrcat(buf1, sizeof(buf1), "const ");
         if (t & VT_VOLATILE)
-            pstrcat(buf1, buf_size, "volatile ");
+            pstrcat(buf1, sizeof(buf1), "volatile ");
         if (varstr)
             pstrcat(buf1, sizeof(buf1), varstr);
         type_to_str(buf, buf_size, &s->type, buf1);
